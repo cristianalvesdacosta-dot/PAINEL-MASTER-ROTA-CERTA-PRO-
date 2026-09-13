@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Master - Rota Certa</title>
-    <!-- Firebase SDK (Versão 8 compatível) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -20,7 +20,7 @@
         .btn-bloqueado { background: #e74c3c; color: #fff; }
         .btn-excluir { background: #7f8c8d; color: #fff; }
         .btn-excluir:hover { background: #c0392b; }
-        .btn-whats { background: #25d366; color: #fff; text-decoration: none; display: inline-block; padding: 6px 10px; border-radius: 6px; font-weight: bold; text-align: center; }
+        .btn-whats { background: #25d366; color: #fff; text-decoration: none; display: inline-block; padding: 6px 10px; border-radius: 6px; font-weight: bold; text-align: center; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -53,7 +53,7 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        // Puxa os dados da pasta 'motoboys' que é onde o cadastro grava
+        // Puxa direto da pasta motoboys que é onde os entregadores se cadastram
         db.ref('motoboys').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
@@ -73,17 +73,14 @@
 
                 let tr = document.createElement('tr');
                 
-                // Badge de status visual
                 let statusBadge = statusAtual.includes('ONLINE') || statusAtual.includes('CADASTRADO')
                     ? `<span style="color: #2ecc71; font-weight: bold;">🟢 ${statusAtual}</span>` 
                     : `<span style="color: #e74c3c; font-weight: bold;">🔴 ${statusAtual}</span>`;
 
-                // Informação de localização formatada
-                let infoLocal = lat && lon 
+                let infoLocal = (lat && lon) 
                     ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>🕒 ${ultimaAtualizacao}</span>`
                     : `<br><span style="font-size: 11px; color: #e74c3c;">Aguardando GPS...</span>`;
 
-                // Botão do WhatsApp para enviar a última coordenada a terceiros
                 let botaoWhats = (lat && lon)
                     ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização do entregador ${nomeCliente}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
                     : `<span style="font-size: 11px; color: #777;">Sem link de GPS</span>`;
