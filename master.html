@@ -54,10 +54,12 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        // Escuta exatamente a mesma referência 'motoboys' onde o cadastro salva
+        // Escuta em tempo real o banco de dados na raiz 'motoboys'
         db.ref('motoboys').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
+            console.log("Dados recebidos do Firebase:", snapshot.val()); // Ajuda a debugar no F12
+
             if (!snapshot.exists()) {
                 listaClientesHTML.innerHTML = "<tr><td colspan='3' style='text-align: center;'>Nenhum entregador cadastrado ainda.</td></tr>";
                 return;
