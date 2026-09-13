@@ -4,39 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Master - Rota Certa</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Versão 8 compatível) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #1e1e2f; color: #fff; padding: 20px; margin: 0; }
-        .container { max-width: 650px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .container { max-width: 750px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { text-align: center; color: #f1c40f; margin-top: 0; }
         p { text-align: center; color: #aaa; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; font-size: 13px; vertical-align: middle; }
         th { color: #3498db; }
-        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; margin: 2px 0; }
         .btn-ativo { background: #2ecc71; color: #fff; }
         .btn-bloqueado { background: #e74c3c; color: #fff; }
-        .btn-excluir { background: #7f8c8d; color: #fff; margin-left: 5px; }
+        .btn-excluir { background: #7f8c8d; color: #fff; }
         .btn-excluir:hover { background: #c0392b; }
+        .btn-whats { background: #25d366; color: #fff; text-decoration: none; display: inline-block; padding: 6px 10px; border-radius: 6px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>🛠️ Painel Master - Gestão de Assinaturas</h2>
-        <p>Controle de acesso e remoção de clientes do Rota Certa</p>
+        <h2>🛠️ Painel Master - Gestão de Entregadores</h2>
+        <p>Monitoramento de status, localização e controle de acessos</p>
         
         <table>
             <thead>
                 <tr>
-                    <th>Cliente / Moto</th>
-                    <th>Licença</th>
-                    <th>Ações</th>
+                    <th>Entregador</th>
+                    <th>Status / Último Local</th>
+                    <th>Ações e Rastreio</th>
                 </tr>
             </thead>
             <tbody id="lista-clientes">
-                <tr><td colspan="3" style="text-align: center;">Carregando clientes...</td></tr>
+                <tr><td colspan="3" style="text-align: center;">Carregando entregadores...</td></tr>
             </tbody>
         </table>
     </div>
@@ -52,11 +53,12 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        db.ref('entregadores').on('value', (snapshot) => {
+        // Puxa os dados da pasta 'motoboys' que é onde o cadastro grava
+        db.ref('motoboys').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
             if (!snapshot.exists()) {
-                listaClientesHTML.innerHTML = "<tr><td colspan='3' style='text-align: center;'>Nenhum cliente cadastrado ainda.</td></tr>";
+                listaClientesHTML.innerHTML = "<tr><td colspan='3' style='text-align: center;'>Nenhum entregador cadastrado ainda.</td></tr>";
                 return;
             }
 
@@ -64,30 +66,49 @@
                 const nomeCliente = childSnapshot.key;
                 const dados = childSnapshot.val();
                 const licencaAtual = dados.licenca || 'ativo';
+                const statusAtual = dados.status || 'Offline';
+                const ultimaAtualizacao = dados.ultimaAtualizacao || 'Sem registro';
+                const lat = dados.latitude;
+                const lon = dados.longitude;
 
                 let tr = document.createElement('tr');
                 
-                let statusBadge = licencaAtual === 'ativo' 
-                    ? '<span style="color: #2ecc71; font-weight: bold;">🟢 ATIVO</span>' 
-                    : '<span style="color: #e74c3c; font-weight: bold;">🔴 BLOQUEADO</span>';
+                // Badge de status visual
+                let statusBadge = statusAtual.includes('ONLINE') || statusAtual.includes('CADASTRADO')
+                    ? `<span style="color: #2ecc71; font-weight: bold;">🟢 ${statusAtual}</span>` 
+                    : `<span style="color: #e74c3c; font-weight: bold;">🔴 ${statusAtual}</span>`;
+
+                // Informação de localização formatada
+                let infoLocal = lat && lon 
+                    ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>🕒 ${ultimaAtualizacao}</span>`
+                    : `<br><span style="font-size: 11px; color: #e74c3c;">Aguardando GPS...</span>`;
+
+                // Botão do WhatsApp para enviar a última coordenada a terceiros
+                let botaoWhats = (lat && lon)
+                    ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização do entregador ${nomeCliente}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
+                    : `<span style="font-size: 11px; color: #777;">Sem link de GPS</span>`;
 
                 let botaoStatus = licencaAtual === 'ativo'
                     ? `<button class="btn btn-bloqueado" onclick="mudarLicenca('${nomeCliente}', 'bloqueado')">Bloquear</button>`
-                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${nomeCliente}', 'ativo')">Renovar / Liberar</button>`;
+                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${nomeCliente}', 'ativo')">Liberar</button>`;
 
                 let botaoExcluir = `<button class="btn btn-excluir" onclick="excluirCliente('${nomeCliente}')">🗑️ Excluir</button>`;
 
                 tr.innerHTML = `
                     <td><b>${nomeCliente}</b></td>
-                    <td>${statusBadge}</td>
-                    <td>${botaoStatus} ${botaoExcluir}</td>
+                    <td>${statusBadge} ${infoLocal}</td>
+                    <td>
+                        ${botaoWhats}<br>
+                        ${botaoStatus} 
+                        ${botaoExcluir}
+                    </td>
                 `;
                 listaClientesHTML.appendChild(tr);
             });
         });
 
         function mudarLicenca(cliente, novaLicenca) {
-            db.ref('entregadores/' + cliente).update({
+            db.ref('motoboys/' + cliente).update({
                 licenca: novaLicenca
             }).then(() => {
                 console.log(`Licença de ${cliente} alterada para ${novaLicenca}`);
@@ -95,10 +116,10 @@
         }
 
         function excluirCliente(cliente) {
-            if (confirm(`Tem certeza que deseja excluir permanentemente o cliente "${cliente}"? Todos os dados dele serão apagados.`)) {
-                db.ref('entregadores/' + cliente).remove()
+            if (confirm(`Tem certeza que deseja excluir permanentemente o entregador "${cliente}"?`)) {
+                db.ref('motoboys/' + cliente).remove()
                     .then(() => {
-                        alert(`🗑️ Cliente ${cliente} excluído com sucesso!`);
+                        alert(`🗑️ Entregador ${cliente} excluído com sucesso!`);
                     })
                     .catch((error) => {
                         alert('Erro ao excluir: ' + error.message);
