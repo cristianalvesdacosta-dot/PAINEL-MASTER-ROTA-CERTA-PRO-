@@ -16,8 +16,8 @@
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; font-size: 14px; }
         th { color: #3498db; }
         .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; }
-        .btn-online { background: #2ecc71; color: #fff; }
-        .btn-offline { background: #e74c3c; color: #fff; }
+        .btn-ativo { background: #2ecc71; color: #fff; }
+        .btn-bloqueado { background: #e74c3c; color: #fff; }
         .btn-excluir { background: #7f8c8d; color: #fff; margin-left: 5px; }
         .btn-excluir:hover { background: #c0392b; }
     </style>
@@ -31,7 +31,7 @@
             <thead>
                 <tr>
                     <th>Cliente / Moto</th>
-                    <th>Status</th>
+                    <th>Licença</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -42,7 +42,6 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE (Corrigida com a URL certa do seu projeto)
         const firebaseConfig = {
             databaseURL: "https://rotacertagps-9ff13-default-rtdb.firebaseio.com"
         };
@@ -53,7 +52,6 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        // Puxa todos os entregadores cadastrados no Firebase em tempo real
         db.ref('entregadores').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
@@ -65,17 +63,17 @@
             snapshot.forEach((childSnapshot) => {
                 const nomeCliente = childSnapshot.key;
                 const dados = childSnapshot.val();
-                const statusAtual = dados.status || 'offline';
+                const licencaAtual = dados.licenca || 'ativo';
 
                 let tr = document.createElement('tr');
                 
-                let statusBadge = statusAtual === 'online' 
-                    ? '<span style="color: #2ecc71; font-weight: bold;">🟢 ONLINE</span>' 
+                let statusBadge = licencaAtual === 'ativo' 
+                    ? '<span style="color: #2ecc71; font-weight: bold;">🟢 ATIVO</span>' 
                     : '<span style="color: #e74c3c; font-weight: bold;">🔴 BLOQUEADO</span>';
 
-                let botaoStatus = statusAtual === 'online'
-                    ? `<button class="btn btn-offline" onclick="mudarStatus('${nomeCliente}', 'offline')">Bloquear</button>`
-                    : `<button class="btn btn-online" onclick="mudarStatus('${nomeCliente}', 'online')">Renovar / Liberar</button>`;
+                let botaoStatus = licencaAtual === 'ativo'
+                    ? `<button class="btn btn-bloqueado" onclick="mudarLicenca('${nomeCliente}', 'bloqueado')">Bloquear</button>`
+                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${nomeCliente}', 'ativo')">Renovar / Liberar</button>`;
 
                 let botaoExcluir = `<button class="btn btn-excluir" onclick="excluirCliente('${nomeCliente}')">🗑️ Excluir</button>`;
 
@@ -88,16 +86,14 @@
             });
         });
 
-        // Função para alternar o status (Renovar / Bloquear)
-        function mudarStatus(cliente, novoStatus) {
+        function mudarLicenca(cliente, novaLicenca) {
             db.ref('entregadores/' + cliente).update({
-                status: novoStatus
+                licenca: novaLicenca
             }).then(() => {
-                console.log(`Status de ${cliente} alterado para ${novoStatus}`);
+                console.log(`Licença de ${cliente} alterada para ${novaLicenca}`);
             });
         }
 
-        // Função para excluir o cliente completamente do banco de dados
         function excluirCliente(cliente) {
             if (confirm(`Tem certeza que deseja excluir permanentemente o cliente "${cliente}"? Todos os dados dele serão apagados.`)) {
                 db.ref('entregadores/' + cliente).remove()
