@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel Master - Rota Certa</title>
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (Versão 8 compatível) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #1e1e2f; color: #fff; padding: 20px; margin: 0; }
-        .container { max-width: 750px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .container { max-width: 800px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { text-align: center; color: #f1c40f; margin-top: 0; }
         p { text-align: center; color: #aaa; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -46,6 +46,7 @@
         const firebaseConfig = {
             databaseURL: "https://rotacertagps-9ff13-default-rtdb.firebaseio.com"
         };
+        
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -53,7 +54,7 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        // Puxa direto da pasta motoboys que é onde os entregadores se cadastram
+        // Escuta exatamente a mesma referência 'motoboys' onde o cadastro salva
         db.ref('motoboys').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
@@ -64,7 +65,7 @@
 
             snapshot.forEach((childSnapshot) => {
                 const nomeCliente = childSnapshot.key;
-                const dados = childSnapshot.val();
+                const dados = childSnapshot.val() || {};
                 const licencaAtual = dados.licenca || 'ativo';
                 const statusAtual = dados.status || 'Offline';
                 const ultimaAtualizacao = dados.ultimaAtualizacao || 'Sem registro';
@@ -73,13 +74,13 @@
 
                 let tr = document.createElement('tr');
                 
-                let statusBadge = statusAtual.includes('ONLINE') || statusAtual.includes('CADASTRADO')
+                let statusBadge = (statusAtual.includes('ONLINE') || statusAtual.includes('CADASTRADO'))
                     ? `<span style="color: #2ecc71; font-weight: bold;">🟢 ${statusAtual}</span>` 
                     : `<span style="color: #e74c3c; font-weight: bold;">🔴 ${statusAtual}</span>`;
 
                 let infoLocal = (lat && lon) 
                     ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>🕒 ${ultimaAtualizacao}</span>`
-                    : `<br><span style="font-size: 11px; color: #e74c3c;">Aguardando GPS...</span>`;
+                    : `<br><span style="font-size: 11px; color: #e74c3c;">Aguardando sinal de GPS...</span>`;
 
                 let botaoWhats = (lat && lon)
                     ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização do entregador ${nomeCliente}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
