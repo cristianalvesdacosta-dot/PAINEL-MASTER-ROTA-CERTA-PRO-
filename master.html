@@ -8,14 +8,15 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #1e1e2f; color: #fff; padding: 20px; margin: 0; }
-        .container { max-width: 800px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        * { box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #1e1e2f; color: #fff; padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { text-align: center; color: #f1c40f; margin-top: 0; }
         p { text-align: center; color: #aaa; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; font-size: 13px; vertical-align: middle; }
         th { color: #3498db; }
-        .btn { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; margin: 2px 0; }
+        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; margin: 2px 0; }
         .btn-ativo { background: #2ecc71; color: #fff; }
         .btn-bloqueado { background: #e74c3c; color: #fff; }
         .btn-excluir { background: #7f8c8d; color: #fff; }
@@ -26,13 +27,13 @@
 <body>
     <div class="container">
         <h2>🛠️ Painel Master - Gestão de Entregadores</h2>
-        <p>Monitoramento de status, localização e controle de acessos</p>
+        <p>Monitoramento em tempo real de status, licenças e localizações</p>
         
         <table>
             <thead>
                 <tr>
-                    <th>Entregador</th>
-                    <th>Status / Último Local</th>
+                    <th>Entregador / Usuário</th>
+                    <th>Status / Licença</th>
                     <th>Ações e Rastreio</th>
                 </tr>
             </thead>
@@ -54,11 +55,11 @@
 
         const listaClientesHTML = document.getElementById('lista-clientes');
 
-        // Escuta em tempo real o banco de dados na raiz 'motoboys'
-        db.ref('motoboys').on('value', (snapshot) => {
+        // Ouve em tempo real a raiz correta 'entregadores' usada no seu projeto
+        db.ref('entregadores').on('value', (snapshot) => {
             listaClientesHTML.innerHTML = '';
             
-            console.log("Dados recebidos do Firebase:", snapshot.val()); // Ajuda a debugar no F12
+            console.log("Dados do Firebase:", snapshot.val());
 
             if (!snapshot.exists()) {
                 listaClientesHTML.innerHTML = "<tr><td colspan='3' style='text-align: center;'>Nenhum entregador cadastrado ainda.</td></tr>";
@@ -66,37 +67,41 @@
             }
 
             snapshot.forEach((childSnapshot) => {
-                const nomeCliente = childSnapshot.key;
+                const usuarioKey = childSnapshot.key;
                 const dados = childSnapshot.val() || {};
+                const nomeEntregador = dados.nome || usuarioKey;
                 const licencaAtual = dados.licenca || 'ativo';
-                const statusAtual = dados.status || 'Offline';
-                const ultimaAtualizacao = dados.ultimaAtualizacao || 'Sem registro';
-                const lat = dados.latitude;
-                const lon = dados.longitude;
+                const statusAtual = dados.status || 'offline';
+                const lat = dados.lat;
+                const lon = dados.lon;
 
                 let tr = document.createElement('tr');
                 
-                let statusBadge = (statusAtual.includes('ONLINE') || statusAtual.includes('CADASTRADO'))
-                    ? `<span style="color: #2ecc71; font-weight: bold;">🟢 ${statusAtual}</span>` 
-                    : `<span style="color: #e74c3c; font-weight: bold;">🔴 ${statusAtual}</span>`;
+                let statusBadge = statusAtual === 'online'
+                    ? `<span style="color: #2ecc71; font-weight: bold;">🟢 Online</span>` 
+                    : `<span style="color: #e74c3c; font-weight: bold;">🔴 Offline</span>`;
+
+                let licencaBadge = licencaAtual === 'ativo'
+                    ? `<span style="color: #3498db; margin-left: 8px;">Licença: Ativa</span>`
+                    : `<span style="color: #e74c3c; margin-left: 8px;">Licença: Bloqueada</span>`;
 
                 let infoLocal = (lat && lon) 
-                    ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}<br>🕒 ${ultimaAtualizacao}</span>`
-                    : `<br><span style="font-size: 11px; color: #e74c3c;">Aguardando sinal de GPS...</span>`;
+                    ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>`
+                    : `<br><span style="font-size: 11px; color: #e74c3c;">Sem sinal de GPS recente</span>`;
 
                 let botaoWhats = (lat && lon)
-                    ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização do entregador ${nomeCliente}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
-                    : `<span style="font-size: 11px; color: #777;">Sem link de GPS</span>`;
+                    ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização de ${nomeEntregador}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
+                    : `<span style="font-size: 11px; color: #777;">Sem GPS disponível</span>`;
 
                 let botaoStatus = licencaAtual === 'ativo'
-                    ? `<button class="btn btn-bloqueado" onclick="mudarLicenca('${nomeCliente}', 'bloqueado')">Bloquear</button>`
-                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${nomeCliente}', 'ativo')">Liberar</button>`;
+                    ? `<button class="btn btn-bloqueado" onclick="mudarLicenca('${usuarioKey}', 'bloqueado')">Bloquear</button>`
+                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${usuarioKey}', 'ativo')">Liberar</button>`;
 
-                let botaoExcluir = `<button class="btn btn-excluir" onclick="excluirCliente('${nomeCliente}')">🗑️ Excluir</button>`;
+                let botaoExcluir = `<button class="btn btn-excluir" onclick="excluirEntregador('${usuarioKey}')">🗑️ Excluir</button>`;
 
                 tr.innerHTML = `
-                    <td><b>${nomeCliente}</b></td>
-                    <td>${statusBadge} ${infoLocal}</td>
+                    <td><b>${nomeEntregador}</b> <br><small style="color:#aaa;">ID: ${usuarioKey}</small></td>
+                    <td>${statusBadge} ${licencaBadge} ${infoLocal}</td>
                     <td>
                         ${botaoWhats}<br>
                         ${botaoStatus} 
@@ -107,19 +112,19 @@
             });
         });
 
-        function mudarLicenca(cliente, novaLicenca) {
-            db.ref('motoboys/' + cliente).update({
+        function mudarLicenca(usuario, novaLicenca) {
+            db.ref('entregadores/' + usuario).update({
                 licenca: novaLicenca
             }).then(() => {
-                console.log(`Licença de ${cliente} alterada para ${novaLicenca}`);
+                console.log(`Licença de ${usuario} alterada para ${novaLicenca}`);
             });
         }
 
-        function excluirCliente(cliente) {
-            if (confirm(`Tem certeza que deseja excluir permanentemente o entregador "${cliente}"?`)) {
-                db.ref('motoboys/' + cliente).remove()
+        function excluirEntregador(usuario) {
+            if (confirm(`Tem certeza que deseja excluir permanentemente o entregador "${usuario}"?`)) {
+                db.ref('entregadores/' + usuario).remove()
                     .then(() => {
-                        alert(`🗑️ Entregador ${cliente} excluído com sucesso!`);
+                        alert(`🗑️ Entregador ${usuario} excluído com sucesso!`);
                     })
                     .catch((error) => {
                         alert('Erro ao excluir: ' + error.message);
