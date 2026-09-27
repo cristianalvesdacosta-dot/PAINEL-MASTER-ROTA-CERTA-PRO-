@@ -3,45 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Master - Rota Certa</title>
-    <!-- Firebase SDK (Versão 8 compatível) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <title>Painel Master – Gestão de Entregadores</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; font-family: Arial, sans-serif; }
-        body { background: #1e1e2f; color: #fff; padding: 20px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; background: #2d2d44; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: #f1c40f; margin-top: 0; }
-        p { text-align: center; color: #aaa; font-size: 14px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #444; font-size: 13px; vertical-align: middle; }
-        th { color: #3498db; }
-        .btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; margin: 2px 0; }
-        .btn-ativo { background: #2ecc71; color: #fff; }
-        .btn-bloqueado { background: #e74c3c; color: #fff; }
-        .btn-excluir { background: #7f8c8d; color: #fff; }
-        .btn-excluir:hover { background: #c0392b; }
-        .btn-whats { background: #25d366; color: #fff; text-decoration: none; display: inline-block; padding: 6px 10px; border-radius: 6px; font-weight: bold; text-align: center; margin-bottom: 5px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px 12px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .master-card { background: #1e293b; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; margin-bottom: 16px; }
+        h1 { font-size: 1.25rem; font-weight: 700; text-align: center; margin-bottom: 6px; color: #38bdf8; }
+        p.sub { font-size: 0.8rem; text-align: center; color: #94a3b8; margin-bottom: 20px; }
+        
+        .entregador-row { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        @media(min-width: 500px) {
+            .entregador-row { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+        
+        .info-area h3 { font-size: 0.95rem; font-weight: 600; color: #fff; }
+        .info-area p { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+        .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-top: 4px; }
+        .status-online { background: #065f46; color: #34d399; }
+        .status-offline { background: #7f1d1d; color: #fca5a5; }
+        .status-ativo { color: #34d399; font-weight: 600; }
+        .status-bloqueado { color: #fca5a5; font-weight: 600; }
+
+        .acoes-area { display: flex; gap: 6px; flex-wrap: wrap; }
+        .btn { padding: 8px 12px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: center; }
+        .btn-local { background: #2563eb; color: white; }
+        .btn-local:hover { background: #1d4ed8; }
+        .btn-bloquear { background: #dc2626; color: white; }
+        .btn-bloquear:hover { background: #b91c1c; }
+        .btn-liberar { background: #16a34a; color: white; }
+        .btn-liberar:hover { background: #15803d; }
+        .btn-excluir { background: #475569; color: white; }
+        .btn-excluir:hover { background: #334155; }
+        
+        #toastMaster { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #38bdf8; color: #0f172a; padding: 10px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem; display: none; z-index: 999; }
     </style>
 </head>
 <body>
+
+    <div id="toastMaster"></div>
+
     <div class="container">
-        <h2>🛠️ Painel Master - Gestão de Entregadores</h2>
-        <p>Monitoramento em tempo real de status, licenças e localizações</p>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Entregador / Usuário</th>
-                    <th>Status / Licença</th>
-                    <th>Ações e Rastreio</th>
-                </tr>
-            </thead>
-            <tbody id="lista-clientes">
-                <tr><td colspan="3" style="text-align: center;">Carregando entregadores...</td></tr>
-            </tbody>
-        </table>
+        <div class="master-card">
+            <h1>🛠️ Painel Master – Gestão de Entregadores</h1>
+            <p class="sub">Controle de licenças, acessos e monitoramento em tempo real</p>
+            
+            <div id="listaEntregadores">
+                <p style="text-align: center; color: #94a3b8; font-size: 0.85rem;">Carregando entregadores...</p>
+            </div>
+        </div>
     </div>
+
+    <!-- Firebase SDK v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
         const firebaseConfig = {
@@ -53,84 +69,95 @@
         }
         const db = firebase.database();
 
-        const listaClientesHTML = document.getElementById('lista-clientes');
+        function mostrarToast(msg) {
+            const t = document.getElementById('toastMaster');
+            t.innerText = msg;
+            t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 3000);
+        }
 
-        // Ouve em tempo real a raiz correta 'entregadores' usada no seu projeto
+        // CARREGA TODOS OS ENTREGADORES CADASTRADOS NO FIREBASE
         db.ref('entregadores').on('value', (snapshot) => {
-            listaClientesHTML.innerHTML = '';
-            
-            console.log("Dados do Firebase:", snapshot.val());
+            const container = document.getElementById('listaEntregadores');
+            container.innerHTML = '';
 
             if (!snapshot.exists()) {
-                listaClientesHTML.innerHTML = "<tr><td colspan='3' style='text-align: center;'>Nenhum entregador cadastrado ainda.</td></tr>";
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; font-size: 0.85rem;">Nenhum entregador cadastrado ainda.</p>';
                 return;
             }
 
             snapshot.forEach((childSnapshot) => {
-                const usuarioKey = childSnapshot.key;
-                const dados = childSnapshot.val() || {};
-                const nomeEntregador = dados.nome || usuarioKey;
-                const licencaAtual = dados.licenca || 'ativo';
-                const statusAtual = dados.status || 'offline';
-                const lat = dados.lat;
-                const lon = dados.lon;
-
-                let tr = document.createElement('tr');
+                let key = childSnapshot.key;
+                let d = childSnapshot.val();
+                let agora = new Date().getTime();
                 
-                let statusBadge = statusAtual === 'online'
-                    ? `<span style="color: #2ecc71; font-weight: bold;">🟢 Online</span>` 
-                    : `<span style="color: #e74c3c; font-weight: bold;">🔴 Offline</span>`;
+                let expiraEm = d.expiraEm || 0;
+                let estaAtivo = agora <= expiraEm;
+                let statusLicencaTxt = estaAtivo ? '<span class="status-ativo">Ativa / Teste</span>' : '<span class="status-bloqueado">Expirada / Bloqueada</span>';
+                
+                let statusTrabalho = d.status === 'online' ? '<span class="status-badge status-online">🟢 Online</span>' : '<span class="status-badge status-offline">🔴 Offline</span>';
+                
+                let latInfo = d.lat ? d.lat.toFixed(4) : 'N/D';
+                let lonInfo = d.lon ? d.lon.toFixed(4) : 'N/D';
 
-                let licencaBadge = licencaAtual === 'ativo'
-                    ? `<span style="color: #3498db; margin-left: 8px;">Licença: Ativa</span>`
-                    : `<span style="color: #e74c3c; margin-left: 8px;">Licença: Bloqueada</span>`;
-
-                let infoLocal = (lat && lon) 
-                    ? `<br><span style="font-size: 11px; color: #aaa;">Lat: ${lat.toFixed(4)}, Lon: ${lon.toFixed(4)}</span>`
-                    : `<br><span style="font-size: 11px; color: #e74c3c;">Sem sinal de GPS recente</span>`;
-
-                let botaoWhats = (lat && lon)
-                    ? `<a href="https://api.whatsapp.com/send?text=${encodeURIComponent(`📍 Localização de ${nomeEntregador}:\nhttps://www.google.com/maps?q=${lat},${lon}`)}" target="_blank" class="btn-whats">📱 Enviar Local</a>`
-                    : `<span style="font-size: 11px; color: #777;">Sem GPS disponível</span>`;
-
-                let botaoStatus = licencaAtual === 'ativo'
-                    ? `<button class="btn btn-bloqueado" onclick="mudarLicenca('${usuarioKey}', 'bloqueado')">Bloquear</button>`
-                    : `<button class="btn btn-ativo" onclick="mudarLicenca('${usuarioKey}', 'ativo')">Liberar</button>`;
-
-                let botaoExcluir = `<button class="btn btn-excluir" onclick="excluirEntregador('${usuarioKey}')">🗑️ Excluir</button>`;
-
-                tr.innerHTML = `
-                    <td><b>${nomeEntregador}</b> <br><small style="color:#aaa;">ID: ${usuarioKey}</small></td>
-                    <td>${statusBadge} ${licencaBadge} ${infoLocal}</td>
-                    <td>
-                        ${botaoWhats}<br>
-                        ${botaoStatus} 
-                        ${botaoExcluir}
-                    </td>
+                let row = document.createElement('div');
+                row.className = 'entregador-row';
+                row.innerHTML = `
+                    <div class="info-area">
+                        <h3>${d.nome || key} <span style="font-size:0.75rem; color:#94a3b8;">(ID: ${key})</span></h3>
+                        <p>Status: ${statusTrabalho} | Licença: ${statusLicencaTxt}</p>
+                        <p>WhatsApp: ${d.whatsapp || 'Não informado'} | Lat/Lon: ${latInfo}, ${lonInfo}</p>
+                    </div>
+                    <div class="acoes-area">
+                        <button class="btn btn-local" onclick="verLocalizacao('${d.lat}', '${d.lon}', '${d.nome}')">📍 Ver</button>
+                        ${estaAtivo ? 
+                            `<button class="btn btn-bloquear" onclick="alterarLicenca('${key}', false)">🔒 Bloquear</button>` : 
+                            `<button class="btn btn-liberar" onclick="alterarLicenca('${key}', true)">✅ Liberar 30 Dias</button>`
+                        }
+                        <button class="btn btn-excluir" onclick="excluirEntregador('${key}')">🗑️ Excluir</button>
+                    </div>
                 `;
-                listaClientesHTML.appendChild(tr);
+                container.appendChild(row);
             });
         });
 
-        function mudarLicenca(usuario, novaLicenca) {
-            db.ref('entregadores/' + usuario).update({
-                licenca: novaLicenca
-            }).then(() => {
-                console.log(`Licença de ${usuario} alterada para ${novaLicenca}`);
+        // FUNÇÃO DE BLOQUEAR OU LIBERAR (ATUALIZA A DATA NO FIREBASE)
+        function alterarLicenca(usuarioKey, liberar) {
+            let novoExpiraEm;
+            let agora = new Date().getTime();
+            
+            if (liberar) {
+                // Adiciona 30 dias a partir de agora
+                novoExpiraEm = agora + (30 * 24 * 60 * 60 * 1000);
+            } else {
+                // Zera a data para expirar imediatamente (bloqueia)
+                novoExpiraEm = agora - 1000;
+            }
+
+            db.ref('entregadores/' + usuarioKey).update({ expiraEm: novoExpiraEm }).then(() => {
+                mostrarToast(liberar ? '✅ Acesso liberado por 30 dias!' : '🔒 Acesso bloqueado com sucesso!');
             });
         }
 
-        function excluirEntregador(usuario) {
-            if (confirm(`Tem certeza que deseja excluir permanentemente o entregador "${usuario}"?`)) {
-                db.ref('entregadores/' + usuario).remove()
-                    .then(() => {
-                        alert(`🗑️ Entregador ${usuario} excluído com sucesso!`);
-                    })
-                    .catch((error) => {
-                        alert('Erro ao excluir: ' + error.message);
-                    });
+        function verLocalizacao(lat, lon, nome) {
+            if (!lat || lat === 'undefined' || !lon || lon === 'undefined') {
+                mostrarToast('⚠️ Este entregador ainda não enviou a localização.');
+                return;
+            }
+            window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
+        }
+
+        function excluirEntregador(usuarioKey) {
+            if (confirm(`Tem certeza que deseja excluir o entregador "${usuarioKey}"?`)) {
+                db.ref('entregadores/' + usuarioKey).remove().then(() => {
+                    mostrarToast('🗑️ Entregador removido.');
+                });
             }
         }
     </script>
 </body>
 </html>
+
+
+
+ Ah, tá. Esse daí é para mim botar lá no painel master, né?
